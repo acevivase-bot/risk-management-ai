@@ -120,14 +120,14 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ============= SESSION MANAGEMENT (NEW) =============
+# ============= SESSION MANAGEMENT =============
 def initialize_session():
     """Initialize session ID untuk multi-user support"""
     if 'session_id' not in st.session_state:
         st.session_state.session_id = str(uuid.uuid4())[:8]
 
 def manage_risk_chat_history(uploaded_file):
-    """Clear chat history when risk dataset changes - ENHANCED WITH SESSION"""
+    """Clear chat history when risk dataset changes"""
     session_id = st.session_state.session_id
 
     if uploaded_file is not None:
@@ -143,109 +143,43 @@ def manage_risk_chat_history(uploaded_file):
         st.session_state.risk_messages = []
         st.info("⚠️ Risk analysis chat cleared for new dataset")
 
-# REMOVED: add_risk_clear_button function (as requested)
-
 # ============= RISK ANALYSIS FUNCTIONS =============
 def get_risk_openai_response(prompt, data_context="", api_key="", model="gpt-3.5-turbo"):
-    """Generate risk-specific response from OpenAI API"""
+    """Generate NATURAL risk conversation response from OpenAI API"""
     try:
         if not api_key:
             return "⚠️ OpenAI API key tidak dikonfigurasi. Silakan konfigurasi di sidebar."
 
         openai.api_key = api_key
 
-        system_prompt = """Anda adalah AI Risk Management Expert yang mengkhususkan diri dalam analisis dan manajemen risiko sesuai standar ISO 31000. 
+        # SIMPLIFIED AND NATURAL SYSTEM PROMPT
+        system_prompt = """Kamu adalah risk management consultant yang berpengalaman. Jawab pertanyaan tentang risk management dengan gaya percakapan natural seperti seorang ahli yang friendly.
 
-        Fokus utama Anda:
-        - Risk Assessment berdasarkan Impact dan Likelihood
-        - Risk Treatment Strategy (Mitigate, Transfer, Accept, Avoid)
-        - Control Effectiveness Analysis
-        - Risk Owner accountability
-        - Compliance dan regulatory requirements
+PENTING:
+- Jawab dengan gaya percakapan natural, bukan format template
+- Jika user cuma bilang "halo" atau greeting, jawab seperti orang normal
+- Jika user tanya hal spesifik, jawab spesifik itu
+- Jangan selalu paksa format "Ringkasan/Key Points/Action Items" 
+- Gunakan bahasa Indonesia yang santai tapi professional
+- Jawab sesuai konteks pertanyaan user
 
-        Berikan jawaban yang:
-        - Praktis dan actionable untuk risk manager
-        - Sesuai dengan best practices ISO 31000
-        - Fokus pada mitigasi konkret
-        - Tidak perlu saran visualisasi (kecuali diminta spesifik)
-        - Singkat namun comprehensive
+Kamu tau tentang ISO 31000, risk assessment, risk treatment, dan best practices manajemen risiko."""
 
-        Jawab dalam bahasa Indonesia dengan gaya profesional risk management."""
-
-        # Risk-specific prompt berdasarkan query
-        if any(keyword in prompt.lower() for keyword in ['impact', 'dampak', 'konsekuensi']):
-            context_prompt = """
-            User bertanya tentang IMPACT/DAMPAK risiko.
-
-            Berikan:
-            1. Ringkasan dampak yang teridentifikasi
-            2. Kategori severity dampak
-            3. Mitigasi spesifik untuk mengurangi impact
-            4. Control yang dapat mengurangi consequences
-            """
-        elif any(keyword in prompt.lower() for keyword in ['cause', 'penyebab', 'root cause']):
-            context_prompt = """
-            User bertanya tentang CAUSE/PENYEBAB risiko.
-
-            Berikan:
-            1. Ringkasan root causes yang teridentifikasi
-            2. Preventive controls untuk eliminate causes
-            3. Mitigasi upstream untuk mencegah occurrence
-            4. Monitoring system untuk early warning
-            """
-        elif any(keyword in prompt.lower() for keyword in ['likelihood', 'probability', 'kemungkinan']):
-            context_prompt = """
-            User bertanya tentang LIKELIHOOD/PROBABILITY risiko.
-
-            Berikan:
-            1. Assessment probabilitas occurrence
-            2. Factors yang mempengaruhi likelihood
-            3. Mitigasi untuk reduce probability
-            4. Monitoring indicators
-            """
-        elif any(keyword in prompt.lower() for keyword in ['control', 'kontrol', 'mitigasi']):
-            context_prompt = """
-            User bertanya tentang CONTROL/MITIGASI risiko.
-
-            Berikan:
-            1. Effectiveness assessment controls yang ada
-            2. Gap analysis dan improvement areas
-            3. Additional controls yang diperlukan
-            4. Control testing dan monitoring
-            """
-        elif any(keyword in prompt.lower() for keyword in ['priority', 'prioritas', 'urgent']):
-            context_prompt = """
-            User bertanya tentang PRIORITIZATION risiko.
-
-            Berikan:
-            1. Risk ranking berdasarkan severity
-            2. Action priority berdasarkan risk rating
-            3. Resource allocation strategy
-            4. Timeline untuk treatment
-            """
+        # NATURAL PROMPT PROCESSING - tidak ada template paksa
+        if prompt.lower() in ['halo', 'hai', 'hello', 'hi']:
+            # Simple greeting response
+            full_prompt = "User mengucapkan salam. Jawab dengan ramah dan tanyakan apa yang bisa dibantu terkait analisis risiko."
+        elif prompt.lower() in ['terima kasih', 'thanks', 'thank you']:
+            full_prompt = "User mengucapkan terima kasih. Jawab dengan sopan."
         else:
-            context_prompt = """
-            User bertanya tentang aspek umum risk management.
+            # Normal risk management question
+            full_prompt = f"""
+            Data Risiko: {data_context}
 
-            Berikan:
-            1. Risk analysis summary
-            2. Key findings dan insights
-            3. Priority actions untuk risk treatment
-            4. Next steps recommendations
+            Pertanyaan User: {prompt}
+
+            Jawab pertanyaan user dengan natural berdasarkan data yang ada. Jangan paksa format template.
             """
-
-        full_prompt = f"""
-        Risk Data Context: {data_context}
-
-        User Query: {prompt}
-
-        {context_prompt}
-
-        Format jawaban:
-        - Ringkasan (2-3 kalimat)
-        - Key Points (bullet points)
-        - Mitigasi/Action Items (specific recommendations)
-        """
 
         try:
             from openai import OpenAI
@@ -257,8 +191,8 @@ def get_risk_openai_response(prompt, data_context="", api_key="", model="gpt-3.5
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": full_prompt}
                 ],
-                max_tokens=1000,
-                temperature=0.3
+                max_tokens=800,  # Reduced untuk avoid overly long responses
+                temperature=0.7  # Increased untuk more natural conversation
             )
 
             return response.choices[0].message.content
@@ -270,8 +204,8 @@ def get_risk_openai_response(prompt, data_context="", api_key="", model="gpt-3.5
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": full_prompt}
                 ],
-                max_tokens=1000,
-                temperature=0.3
+                max_tokens=800,
+                temperature=0.7
             )
 
             return response.choices[0].message.content
@@ -290,67 +224,34 @@ Untuk sementara, silakan gunakan Perplexity API sebagai alternatif."""
             return f"❌ Error OpenAI: {error_msg}"
 
 def get_risk_perplexity_response(prompt, data_context="", api_key="", model="llama-3.1-sonar-small-128k-online"):
-    """Generate risk-specific response from Perplexity API"""
+    """Generate NATURAL risk conversation response from Perplexity API"""
     try:
         if not api_key:
             return "⚠️ Perplexity API key tidak dikonfigurasi. Silakan konfigurasi di sidebar."
 
         url = "https://api.perplexity.ai/chat/completions"
-
         headers = {
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json"
         }
 
-        system_prompt = """Anda adalah AI Risk Management Expert yang mengkhususkan diri dalam analisis dan manajemen risiko sesuai standar ISO 31000. 
+        # NATURAL SYSTEM PROMPT - NO FORCED TEMPLATES
+        system_prompt = """Kamu adalah risk management consultant yang berpengalaman. Jawab pertanyaan tentang risk management dengan gaya percakapan natural seperti seorang ahli yang friendly.
 
-        Fokus utama Anda:
-        - Risk Assessment berdasarkan Impact dan Likelihood
-        - Risk Treatment Strategy (Mitigate, Transfer, Accept, Avoid)
-        - Control Effectiveness Analysis
-        - Risk Owner accountability
-        - Compliance dan regulatory requirements
+PENTING:
+- Jawab dengan gaya percakapan natural, bukan format template
+- Jika user cuma bilang "halo" atau greeting, jawab seperti orang normal
+- Jangan selalu paksa format "Ringkasan/Key Points/Action Items" 
+- Gunakan bahasa Indonesia yang santai tapi professional
+- Jawab sesuai konteks pertanyaan user saja"""
 
-        Berikan jawaban yang:
-        - Praktis dan actionable untuk risk manager
-        - Sesuai dengan best practices ISO 31000
-        - Fokus pada mitigasi konkret
-        - Tidak perlu saran visualisasi (kecuali diminta spesifik)
-        - Singkat namun comprehensive
-
-        Jawab dalam bahasa Indonesia dengan gaya profesional risk management."""
-
-        # Risk-specific prompt logic (same as OpenAI)
-        if any(keyword in prompt.lower() for keyword in ['impact', 'dampak', 'konsekuensi']):
-            context_prompt = """
-            User bertanya tentang IMPACT/DAMPAK risiko.
-            Berikan: Ringkasan dampak, severity kategori, mitigasi spesifik, control untuk consequences.
-            """
-        elif any(keyword in prompt.lower() for keyword in ['cause', 'penyebab', 'root cause']):
-            context_prompt = """
-            User bertanya tentang CAUSE/PENYEBAB risiko.
-            Berikan: Root causes, preventive controls, upstream mitigasi, early warning monitoring.
-            """
-        elif any(keyword in prompt.lower() for keyword in ['control', 'kontrol', 'mitigasi']):
-            context_prompt = """
-            User bertanya tentang CONTROL/MITIGASI risiko.
-            Berikan: Control effectiveness, gap analysis, additional controls, monitoring strategy.
-            """
+        # NATURAL PROMPT PROCESSING
+        if prompt.lower() in ['halo', 'hai', 'hello', 'hi']:
+            full_prompt = "User mengucapkan salam. Jawab dengan ramah dan tanyakan apa yang bisa dibantu."
+        elif prompt.lower() in ['terima kasih', 'thanks', 'thank you']:
+            full_prompt = "User mengucapkan terima kasih. Jawab dengan sopan."
         else:
-            context_prompt = """
-            User bertanya tentang risk management secara umum.
-            Berikan: Risk analysis summary, key findings, priority actions, next steps.
-            """
-
-        full_prompt = f"""
-        Risk Data Context: {data_context}
-
-        User Query: {prompt}
-
-        {context_prompt}
-
-        Format: Ringkasan singkat, Key Points, Mitigasi/Action Items.
-        """
+            full_prompt = f"Data Risiko: {data_context}\n\nPertanyaan: {prompt}\n\nJawab dengan natural sesuai pertanyaan."
 
         payload = {
             "model": model,
@@ -358,8 +259,8 @@ def get_risk_perplexity_response(prompt, data_context="", api_key="", model="lla
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": full_prompt}
             ],
-            "max_tokens": 1000,
-            "temperature": 0.3
+            "max_tokens": 800,
+            "temperature": 0.7
         }
 
         response = requests.post(url, headers=headers, json=payload)
@@ -527,7 +428,7 @@ def create_risk_visualization(data, chart_type, x_axis, y_axis=None, color=None)
         st.error(f"Error creating risk visualization: {e}")
         return None
 
-# ============= CUSTOM VISUALIZATION FUNCTION (NEW) =============
+# ============= CUSTOM VISUALIZATION FUNCTION =============
 def create_custom_visualization(data, chart_type, x_col, y_col=None, color_col=None, title="Custom Chart"):
     """Create custom visualizations berdasarkan user selection"""
     try:
@@ -597,7 +498,7 @@ def main():
     st.markdown('<h1 class="main-header">⚠️ Data Analysis for Risk Management</h1>', unsafe_allow_html=True)
     st.markdown('<p class="sub-header">AI-powered risk analysis and management dashboard based on ISO 31000 standards</p>', unsafe_allow_html=True)
 
-    # Session ID Display (NEW)
+    # Session ID Display
     st.markdown(f'<div class="session-id">🔒 Session ID: <strong>{st.session_state.session_id}</strong> | Multi-user Support Active</div>', unsafe_allow_html=True)
 
     # ISO 31000 Info Box
@@ -742,7 +643,7 @@ def main():
             st.markdown("### 📋 Risk Assessment Data")
             st.dataframe(data, use_container_width=True, height=300)
 
-            # ============= CUSTOM VISUALIZATION SECTION (NEW) =============
+            # ============= CUSTOM VISUALIZATION SECTION =============
             st.markdown("### 🎨 Custom Risk Visualization")
 
             viz_col1, viz_col2 = st.columns([2, 1])
@@ -874,10 +775,8 @@ def main():
                         st.markdown("#### 📈 Control Effectiveness (by Avg Risk Rating)")
                         st.dataframe(control_effectiveness, use_container_width=True)
 
-            # ============= AI RISK ASSISTANT =============
+            # ============= AI RISK ASSISTANT WITH NATURAL CONVERSATION =============
             st.markdown("### 🤖 AI Risk Management Assistant")
-
-            # REMOVED: add_risk_clear_button() call
 
             if not api_key:
                 st.markdown('<div class="warning-msg">⚠️ Konfigurasi API key di sidebar untuk menggunakan AI Risk Assistant</div>', unsafe_allow_html=True)
@@ -886,54 +785,36 @@ def main():
                 if "risk_messages" not in st.session_state:
                     st.session_state.risk_messages = []
 
-                # Risk-specific quick prompts
-                st.markdown("#### 💡 Risk Analysis Quick Prompts")
+                # SIMPLIFIED Quick prompts - more natural
+                st.markdown("#### 💡 Quick Questions")
                 col1, col2, col3, col4 = st.columns(4)
 
-                risk_prompts = [
-                    "Analisis risiko dengan rating tertinggi dan mitigasinya",
-                    "Identifikasi penyebab utama risiko yang perlu prioritas",
-                    "Evaluasi efektivitas kontrol yang sudah ada",
-                    "Rekomendasi treatment untuk risiko critical"
+                # More natural quick prompts
+                natural_prompts = [
+                    "Risiko mana yang paling urgent?",
+                    "Bagaimana kondisi risiko secara overall?",
+                    "Control mana yang perlu diperbaiki?",
+                    "Apa rekomendasi prioritas saya?"
                 ]
 
-                for i, (col, risk_prompt) in enumerate(zip([col1, col2, col3, col4], risk_prompts)):
+                for i, (col, prompt) in enumerate(zip([col1, col2, col3, col4], natural_prompts)):
                     with col:
-                        if st.button(f"⚠️ {risk_prompt}", key=f"risk_quick_{i}_{st.session_state.session_id}", use_container_width=True):
-                            st.session_state.risk_messages.append({"role": "user", "content": risk_prompt})
-                            st.session_state.last_activity = time.time()
+                        if st.button(f"💬 {prompt}", key=f"natural_quick_{i}_{st.session_state.session_id}", use_container_width=True):
+                            st.session_state.risk_messages.append({"role": "user", "content": prompt})
                             st.rerun()
 
                 # Chat input
-                if prompt := st.chat_input("Tanyakan tentang analisis risiko, mitigasi, atau strategi treatment...", key=f"risk_chat_{st.session_state.session_id}"):
-                    # Update activity timestamp
-                    st.session_state.last_activity = time.time()
-
+                if prompt := st.chat_input("Tanya apa aja tentang risk management...", key=f"risk_chat_{st.session_state.session_id}"):
                     # Add user message to chat history
                     st.session_state.risk_messages.append({"role": "user", "content": prompt})
 
                     # Generate AI response
-                    with st.spinner(f"🤖 AI Risk Expert menganalisis..."):
-                        # Prepare risk data context - FIXED UNICODE ISSUE
+                    with st.spinner(f"💭 Thinking..."):
+                        # MINIMAL context - tidak overwhelming
                         risk_context = f"""
-                        Risk Assessment Dataset: {uploaded_file.name}
-                        Session: {st.session_state.session_id}
-                        Total Risks: {len(data)}
-
-                        Risk Distribution:
-                        - Critical (>=20): {risk_analysis.get('critical_risks', 0)}
-                        - High (15-19): {risk_analysis.get('high_risks', 0)}
-                        - Medium (10-14): {risk_analysis.get('medium_risks', 0)}
-                        - Low (<10): {risk_analysis.get('low_risks', 0)}
-
-                        Open Risks: {risk_analysis.get('open_risks', 0)}
-                        Average Risk Rating: {risk_analysis.get('avg_risk_rating', 0):.1f}
-
-                        Top Risk Areas: {list(risk_analysis.get('top_assets_at_risk', {}).keys())[:3] if risk_analysis.get('top_assets_at_risk') else 'N/A'}
-                        Common Threats: {list(risk_analysis.get('top_threats', {}).keys())[:3] if risk_analysis.get('top_threats') else 'N/A'}
-
-                        Sample High-Risk Items:
-                        {data.nlargest(3, 'Risk_Rating')[['Risk_ID', 'Asset', 'Threat', 'Impact', 'Likelihood', 'Risk_Rating']].to_string() if 'Risk_Rating' in data.columns else 'No risk rating data'}
+                        Dataset: {len(data)} risks, average rating {risk_analysis.get('avg_risk_rating', 0):.1f}
+                        Critical: {risk_analysis.get('critical_risks', 0)}, High: {risk_analysis.get('high_risks', 0)}, Medium: {risk_analysis.get('medium_risks', 0)}, Low: {risk_analysis.get('low_risks', 0)}
+                        Open risks: {risk_analysis.get('open_risks', 0)}
                         """
 
                         if api_provider == "OpenAI":
@@ -948,8 +829,8 @@ def main():
                 for message in st.session_state.risk_messages:
                     with st.chat_message(message["role"]):
                         if message["role"] == "assistant":
-                            # Format risk assistant response in mitigation box
-                            st.markdown(f'<div class="mitigation-box">{message["content"]}</div>', unsafe_allow_html=True)
+                            # Natural response - no forced mitigation box styling
+                            st.markdown(message["content"])
                         else:
                             st.markdown(message["content"])
 
@@ -1006,11 +887,11 @@ def main():
     with col2:
         st.markdown("### AI Risk Assistant")
         st.markdown("""
-        - 💬 Impact & Mitigation Analysis
-        - 🔍 Root Cause Investigation
-        - 📈 Priority Risk Identification
-        - 🛠️ Treatment Strategy Planning
-        - 📋 ISO 31000 Compliance Check
+        - 💬 Natural conversation style
+        - 🔍 Context-aware responses
+        - 📈 Quick question prompts
+        - 🛠️ Practical recommendations
+        - 📋 ISO 31000 compliant advice
         """)
 
     with col3:
@@ -1025,7 +906,7 @@ def main():
 
     # Contact info
     st.markdown("---")
-    st.markdown("**🛡️ Professional Risk Management with AI Intelligence**")
+    st.markdown("**🛡️ Professional Risk Management with Natural AI Conversation**")
 
 if __name__ == "__main__":
     main()
