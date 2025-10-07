@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -578,7 +577,7 @@ def main():
     - **Priority** Risk Ranking
     - **Treatment Strategy** Planning
     """)
-    
+
     # Creator information at bottom of sidebar
     st.sidebar.markdown("---")
     st.sidebar.markdown("""
@@ -587,7 +586,8 @@ def main():
     <p><strong>Created by:</strong> Vito Devara</p>
     <p><strong>Phone:</strong> 081259795994</p>
     </div>
-    
+    """, unsafe_allow_html=True)
+
     # ============= FILE UPLOAD =============
     st.markdown("### 📤 Upload Risk Assessment Data")
 
@@ -623,7 +623,7 @@ def main():
 
                 with col1:
                     critical_count = risk_analysis.get('critical_risks', 0)
-                    st.markdown(f'<div class="risk-card-critical"><h3>{critical_count}</h3><p>Critical Risks<br>(Rating ≥ 20)</p></div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="risk-card-critical"><h3>{critical_count}</h3><p>Critical Risks<br>(Rating >= 20)</p></div>', unsafe_allow_html=True)
 
                 with col2:
                     high_count = risk_analysis.get('high_risks', 0)
@@ -783,12 +783,11 @@ def main():
 
                     # Generate AI response
                     with st.spinner(f"🤖 AI Risk Expert menganalisis..."):
-                        # Prepare risk data context
+                        # Prepare risk data context - FIXED UNICODE ISSUE
                         risk_context = f"""
                         Risk Assessment Dataset: {uploaded_file.name}
                         Total Risks: {len(data)}
 
-                        #≥
                         Risk Distribution:
                         - Critical (>=20): {risk_analysis.get('critical_risks', 0)}
                         - High (15-19): {risk_analysis.get('high_risks', 0)}
@@ -796,7 +795,7 @@ def main():
                         - Low (<10): {risk_analysis.get('low_risks', 0)}
 
                         Open Risks: {risk_analysis.get('open_risks', 0)}
-                        Average Risk Rating: {risk_analysis.get('avg_risk_rating', 0)}
+                        Average Risk Rating: {risk_analysis.get('avg_risk_rating', 0):.1f}
 
                         Top Risk Areas: {list(risk_analysis.get('top_assets_at_risk', {}).keys())[:3] if risk_analysis.get('top_assets_at_risk') else 'N/A'}
                         Common Threats: {list(risk_analysis.get('top_threats', {}).keys())[:3] if risk_analysis.get('top_threats') else 'N/A'}
