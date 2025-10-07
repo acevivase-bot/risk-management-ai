@@ -569,16 +569,24 @@ def main():
     else:
         st.sidebar.warning("⚠️ Configure API key to use AI features")
 
+    # st.sidebar.markdown("---")
+    # st.sidebar.markdown("### 🎯 Risk Management Focus")
+    # st.sidebar.markdown("""
+    # - **Impact Analysis** & Mitigation
+    # - **Root Cause** Investigation  
+    # - **Control Effectiveness** Assessment
+    # - **Priority** Risk Ranking
+    # - **Treatment Strategy** Planning
+    # """)
+    
+    # Creator information at bottom of sidebar
     st.sidebar.markdown("---")
-    st.sidebar.markdown("### 🎯 Risk Management Focus")
     st.sidebar.markdown("""
-    - **Impact Analysis** & Mitigation
-    - **Root Cause** Investigation  
-    - **Control Effectiveness** Assessment
-    - **Priority** Risk Ranking
-    - **Treatment Strategy** Planning
-    """)
-
+    <div class="creator-info">
+    <h4>👨‍💻 Creator Information</h4>
+    <p><strong>Created by:</strong> Vito Devara</p>
+    <p><strong>Phone:</strong> 081259795994</p>
+    </div>
     # ============= FILE UPLOAD =============
     st.markdown("### 📤 Upload Risk Assessment Data")
 
