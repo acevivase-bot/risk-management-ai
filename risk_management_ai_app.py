@@ -853,7 +853,7 @@ def main():
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.markdown("### 🎯 Risk Management Features")
+        st.markdown("### Features")
         st.markdown("""
         - 📤 Risk Assessment Data Upload
         - 🎯 Real-time Risk Dashboard
@@ -863,7 +863,7 @@ def main():
         """)
 
     with col2:
-        st.markdown("### 🤖 AI Risk Assistant")
+        st.markdown("### AI Risk Assistant")
         st.markdown("""
         - 💬 Impact & Mitigation Analysis
         - 🔍 Root Cause Investigation
@@ -873,7 +873,7 @@ def main():
         """)
 
     with col3:
-        st.markdown("### 🏢 Enterprise Ready")
+        st.markdown("### Enterprise Ready")
         st.markdown("""
         - 📊 Executive Risk Reporting
         - 👥 Risk Owner Assignment
