@@ -796,7 +796,7 @@ def main():
                         - Low (<10): {risk_analysis.get('low_risks', 0)}
 
                         Open Risks: {risk_analysis.get('open_risks', 0)}
-                        Average Risk Rating: {risk_analysis.get('avg_risk_rating', 0):.2f}
+                        Average Risk Rating: {risk_analysis.get('avg_risk_rating', 0)}
 
                         Top Risk Areas: {list(risk_analysis.get('top_assets_at_risk', {}).keys())[:3] if risk_analysis.get('top_assets_at_risk') else 'N/A'}
                         Common Threats: {list(risk_analysis.get('top_threats', {}).keys())[:3] if risk_analysis.get('top_threats') else 'N/A'}
