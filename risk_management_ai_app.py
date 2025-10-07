@@ -787,8 +787,9 @@ def main():
                         Risk Assessment Dataset: {uploaded_file.name}
                         Total Risks: {len(data)}
 
+                        #≥
                         Risk Distribution:
-                        - Critical (≥20): {risk_analysis.get('critical_risks', 0)}
+                        - Critical (>=20): {risk_analysis.get('critical_risks', 0)}
                         - High (15-19): {risk_analysis.get('high_risks', 0)}
                         - Medium (10-14): {risk_analysis.get('medium_risks', 0)}
                         - Low (<10): {risk_analysis.get('low_risks', 0)}
