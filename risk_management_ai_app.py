@@ -143,47 +143,71 @@ def manage_risk_chat_history(uploaded_file):
         st.session_state.risk_messages = []
         st.info("⚠️ Risk analysis chat cleared for new dataset")
 
-# ============= RISK ANALYSIS FUNCTIONS =============
+# ============= HYBRID AI RESPONSE FUNCTIONS (ONLY EDITED PART) =============
 def get_risk_openai_response(prompt, data_context="", api_key="", model="gpt-3.5-turbo"):
-    """Generate NATURAL risk conversation response from OpenAI API"""
+    """Generate HYBRID response: Natural greetings + Systematic risk analysis"""
     try:
         if not api_key:
             return "⚠️ OpenAI API key tidak dikonfigurasi. Silakan konfigurasi di sidebar."
 
         openai.api_key = api_key
 
-        # SIMPLIFIED AND NATURAL SYSTEM PROMPT
-        system_prompt = """Kamu adalah risk management consultant yang berpengalaman. Jawab pertanyaan tentang risk management dengan gaya percakapan natural seperti seorang ahli yang friendly.
+        # HYBRID SYSTEM PROMPT
+        system_prompt = """Kamu adalah AI Risk Management Expert. Responmu akan disesuaikan dengan jenis pertanyaan:
 
-PENTING:
-- Jawab dengan gaya percakapan natural, bukan format template
-- Jika user cuma bilang "halo" atau greeting, jawab seperti orang normal
-- Jika user tanya hal spesifik, jawab spesifik itu
-- Jangan selalu paksa format "Ringkasan/Key Points/Action Items" 
-- Gunakan bahasa Indonesia yang santai tapi professional
-- Jawab sesuai konteks pertanyaan user
+UNTUK GREETING (halo, hai, thanks):
+- Jawab natural dan friendly
+- Jangan berikan analisis risiko yang tidak diminta
 
-Kamu tau tentang ISO 31000, risk assessment, risk treatment, dan best practices manajemen risiko."""
+UNTUK RISK QUESTIONS:
+- Jawab sistematis dan profesional
+- Gunakan struktur yang jelas dan actionable
+- Fokus pada insight berbasis data
+- Berikan rekomendasi konkret
 
-        # NATURAL PROMPT PROCESSING - tidak ada template paksa
-        if prompt.lower() in ['halo', 'hai', 'hello', 'hi']:
-            # Simple greeting response
-            full_prompt = "User mengucapkan salam. Jawab dengan ramah dan tanyakan apa yang bisa dibantu terkait analisis risiko."
-        elif prompt.lower() in ['terima kasih', 'thanks', 'thank you']:
-            full_prompt = "User mengucapkan terima kasih. Jawab dengan sopan."
+Gunakan bahasa Indonesia profesional."""
+
+        # HYBRID PROMPT LOGIC (ONLY THIS PART EDITED)
+        prompt_lower = prompt.lower().strip()
+
+        # Natural response for greetings only
+        if prompt_lower in ['halo', 'hai', 'hello', 'hi']:
+            full_prompt = "User mengucapkan salam. Jawab ramah dan tanyakan apa yang bisa dibantu terkait risk management."
+            use_natural_settings = True
+
+        elif prompt_lower in ['terima kasih', 'thanks', 'thank you']:
+            full_prompt = "User mengucapkan terima kasih. Jawab sopan dan singkat."
+            use_natural_settings = True
+
+        # Systematic response for risk questions
         else:
-            # Normal risk management question
+            # Risk analysis dengan struktur systematic
             full_prompt = f"""
-            Data Risiko: {data_context}
+            Risk Assessment Data Context:
+            {data_context}
 
-            Pertanyaan User: {prompt}
+            User Question: {prompt}
 
-            Jawab pertanyaan user dengan natural berdasarkan data yang ada. Jangan paksa format template.
+            Analisis pertanyaan user dan berikan jawaban sistematis dengan struktur:
+            1. Summary singkat (1-2 kalimat)
+            2. Key findings berdasarkan data
+            3. Actionable recommendations
+
+            Fokus pada insight yang actionable dan berbasis data yang tersedia.
             """
+            use_natural_settings = False
 
         try:
             from openai import OpenAI
             client = OpenAI(api_key=api_key)
+
+            # Use different settings based on prompt type
+            if use_natural_settings:
+                max_tokens = 200
+                temperature = 0.8
+            else:
+                max_tokens = 800
+                temperature = 0.4
 
             response = client.chat.completions.create(
                 model=model,
@@ -191,21 +215,29 @@ Kamu tau tentang ISO 31000, risk assessment, risk treatment, dan best practices 
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": full_prompt}
                 ],
-                max_tokens=800,  # Reduced untuk avoid overly long responses
-                temperature=0.7  # Increased untuk more natural conversation
+                max_tokens=max_tokens,
+                temperature=temperature
             )
 
             return response.choices[0].message.content
 
         except ImportError:
+            # Use different settings based on prompt type
+            if use_natural_settings:
+                max_tokens = 200
+                temperature = 0.8
+            else:
+                max_tokens = 800
+                temperature = 0.4
+
             response = openai.ChatCompletion.create(
                 model=model,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": full_prompt}
                 ],
-                max_tokens=800,
-                temperature=0.7
+                max_tokens=max_tokens,
+                temperature=temperature
             )
 
             return response.choices[0].message.content
@@ -224,7 +256,7 @@ Untuk sementara, silakan gunakan Perplexity API sebagai alternatif."""
             return f"❌ Error OpenAI: {error_msg}"
 
 def get_risk_perplexity_response(prompt, data_context="", api_key="", model="llama-3.1-sonar-small-128k-online"):
-    """Generate NATURAL risk conversation response from Perplexity API"""
+    """Generate HYBRID response: Natural greetings + Systematic risk analysis"""
     try:
         if not api_key:
             return "⚠️ Perplexity API key tidak dikonfigurasi. Silakan konfigurasi di sidebar."
@@ -235,23 +267,42 @@ def get_risk_perplexity_response(prompt, data_context="", api_key="", model="lla
             "Content-Type": "application/json"
         }
 
-        # NATURAL SYSTEM PROMPT - NO FORCED TEMPLATES
-        system_prompt = """Kamu adalah risk management consultant yang berpengalaman. Jawab pertanyaan tentang risk management dengan gaya percakapan natural seperti seorang ahli yang friendly.
+        # HYBRID SYSTEM PROMPT
+        system_prompt = """Kamu adalah AI Risk Management Expert. Responmu disesuaikan dengan jenis pertanyaan:
 
-PENTING:
-- Jawab dengan gaya percakapan natural, bukan format template
-- Jika user cuma bilang "halo" atau greeting, jawab seperti orang normal
-- Jangan selalu paksa format "Ringkasan/Key Points/Action Items" 
-- Gunakan bahasa Indonesia yang santai tapi professional
-- Jawab sesuai konteks pertanyaan user saja"""
+GREETING: Natural dan friendly
+RISK QUESTIONS: Sistematis dengan struktur jelas dan actionable recommendations
 
-        # NATURAL PROMPT PROCESSING
-        if prompt.lower() in ['halo', 'hai', 'hello', 'hi']:
-            full_prompt = "User mengucapkan salam. Jawab dengan ramah dan tanyakan apa yang bisa dibantu."
-        elif prompt.lower() in ['terima kasih', 'thanks', 'thank you']:
-            full_prompt = "User mengucapkan terima kasih. Jawab dengan sopan."
+Gunakan bahasa Indonesia profesional."""
+
+        # HYBRID PROMPT LOGIC (ONLY THIS PART EDITED)
+        prompt_lower = prompt.lower().strip()
+
+        # Natural response for greetings
+        if prompt_lower in ['halo', 'hai', 'hello', 'hi']:
+            full_prompt = "User mengucapkan salam. Jawab ramah dan singkat."
+            use_natural_settings = True
+
+        elif prompt_lower in ['terima kasih', 'thanks', 'thank you']:
+            full_prompt = "User mengucapkan terima kasih. Jawab sopan."
+            use_natural_settings = True
+
+        # Systematic response for risk questions
         else:
-            full_prompt = f"Data Risiko: {data_context}\n\nPertanyaan: {prompt}\n\nJawab dengan natural sesuai pertanyaan."
+            full_prompt = f"""Risk Data: {data_context}
+
+Question: {prompt}
+
+Berikan analisis sistematis dengan struktur: Summary singkat, Key findings, Actionable recommendations."""
+            use_natural_settings = False
+
+        # Use different settings based on prompt type
+        if use_natural_settings:
+            max_tokens = 200
+            temperature = 0.8
+        else:
+            max_tokens = 800
+            temperature = 0.4
 
         payload = {
             "model": model,
@@ -259,8 +310,8 @@ PENTING:
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": full_prompt}
             ],
-            "max_tokens": 800,
-            "temperature": 0.7
+            "max_tokens": max_tokens,
+            "temperature": temperature
         }
 
         response = requests.post(url, headers=headers, json=payload)
@@ -489,7 +540,7 @@ def create_custom_visualization(data, chart_type, x_col, y_col=None, color_col=N
         st.error(f"Error creating custom visualization: {e}")
         return None
 
-# ============= MAIN APPLICATION =============
+# ============= MAIN APPLICATION (UNCHANGED) =============
 def main():
     # Initialize session
     initialize_session()
@@ -775,7 +826,7 @@ def main():
                         st.markdown("#### 📈 Control Effectiveness (by Avg Risk Rating)")
                         st.dataframe(control_effectiveness, use_container_width=True)
 
-            # ============= AI RISK ASSISTANT WITH NATURAL CONVERSATION =============
+            # ============= AI RISK ASSISTANT WITH HYBRID RESPONSE =============
             st.markdown("### 🤖 AI Risk Management Assistant")
 
             if not api_key:
@@ -785,21 +836,21 @@ def main():
                 if "risk_messages" not in st.session_state:
                     st.session_state.risk_messages = []
 
-                # SIMPLIFIED Quick prompts - more natural
+                # Quick prompts - mix of casual and systematic
                 st.markdown("#### 💡 Quick Questions")
                 col1, col2, col3, col4 = st.columns(4)
 
-                # More natural quick prompts
-                natural_prompts = [
+                # Hybrid prompts - some casual, some systematic
+                hybrid_prompts = [
                     "Risiko mana yang paling urgent?",
                     "Bagaimana kondisi risiko secara overall?",
                     "Control mana yang perlu diperbaiki?",
                     "Apa rekomendasi prioritas saya?"
                 ]
 
-                for i, (col, prompt) in enumerate(zip([col1, col2, col3, col4], natural_prompts)):
+                for i, (col, prompt) in enumerate(zip([col1, col2, col3, col4], hybrid_prompts)):
                     with col:
-                        if st.button(f"💬 {prompt}", key=f"natural_quick_{i}_{st.session_state.session_id}", use_container_width=True):
+                        if st.button(f"💬 {prompt}", key=f"hybrid_quick_{i}_{st.session_state.session_id}", use_container_width=True):
                             st.session_state.risk_messages.append({"role": "user", "content": prompt})
                             st.rerun()
 
@@ -809,12 +860,14 @@ def main():
                     st.session_state.risk_messages.append({"role": "user", "content": prompt})
 
                     # Generate AI response
-                    with st.spinner(f"💭 Thinking..."):
-                        # MINIMAL context - tidak overwhelming
+                    with st.spinner(f"💭 Processing..."):
+                        # Risk context for systematic questions
                         risk_context = f"""
                         Dataset: {len(data)} risks, average rating {risk_analysis.get('avg_risk_rating', 0):.1f}
                         Critical: {risk_analysis.get('critical_risks', 0)}, High: {risk_analysis.get('high_risks', 0)}, Medium: {risk_analysis.get('medium_risks', 0)}, Low: {risk_analysis.get('low_risks', 0)}
                         Open risks: {risk_analysis.get('open_risks', 0)}
+                        Top assets at risk: {list(risk_analysis.get('top_assets_at_risk', {}).keys())[:3]}
+                        Common threats: {list(risk_analysis.get('top_threats', {}).keys())[:3]}
                         """
 
                         if api_provider == "OpenAI":
@@ -828,11 +881,7 @@ def main():
                 # Display risk chat history
                 for message in st.session_state.risk_messages:
                     with st.chat_message(message["role"]):
-                        if message["role"] == "assistant":
-                            # Natural response - no forced mitigation box styling
-                            st.markdown(message["content"])
-                        else:
-                            st.markdown(message["content"])
+                        st.markdown(message["content"])
 
         except Exception as e:
             st.error(f"Error loading risk assessment data: {e}")
@@ -887,10 +936,10 @@ def main():
     with col2:
         st.markdown("### AI Risk Assistant")
         st.markdown("""
-        - 💬 Natural conversation style
-        - 🔍 Context-aware responses
-        - 📈 Quick question prompts
-        - 🛠️ Practical recommendations
+        - 💬 Hybrid conversation style
+        - 🔍 Natural greetings
+        - 📈 Systematic risk analysis
+        - 🛠️ Actionable recommendations
         - 📋 ISO 31000 compliant advice
         """)
 
@@ -906,7 +955,7 @@ def main():
 
     # Contact info
     st.markdown("---")
-    st.markdown("**🛡️ Professional Risk Management with Natural AI Conversation**")
+    st.markdown("**🛡️ Professional Risk Management with Hybrid AI Intelligence**")
 
 if __name__ == "__main__":
     main()
