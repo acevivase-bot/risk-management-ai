@@ -569,15 +569,15 @@ def main():
     else:
         st.sidebar.warning("⚠️ Configure API key to use AI features")
 
-    # st.sidebar.markdown("---")
-    # st.sidebar.markdown("### 🎯 Risk Management Focus")
-    # st.sidebar.markdown("""
-    # - **Impact Analysis** & Mitigation
-    # - **Root Cause** Investigation  
-    # - **Control Effectiveness** Assessment
-    # - **Priority** Risk Ranking
-    # - **Treatment Strategy** Planning
-    # """)
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("### 🎯 Risk Management Focus")
+    st.sidebar.markdown("""
+    - **Impact Analysis** & Mitigation
+    - **Root Cause** Investigation  
+    - **Control Effectiveness** Assessment
+    - **Priority** Risk Ranking
+    - **Treatment Strategy** Planning
+    """)
     
     # Creator information at bottom of sidebar
     st.sidebar.markdown("---")
